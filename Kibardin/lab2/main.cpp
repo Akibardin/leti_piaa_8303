@@ -123,9 +123,15 @@ public:
 
     void setHeuristicStepik(char EndTop)// эвристика для степика
     {
-        for(int i = 0; i < MATRIX_SIZE; i++)
+        for(int i = 0; i < MATRIX_SIZE; i++) {
             for(int j = 0; j < MATRIX_SIZE; j++)
-                    matrix[i][j].hX = fabs(EndTop - (j + 'a'));
+            {
+                float buff = fabs(EndTop - (j + 'a'));
+                matrix[i][j].hX = fabs(EndTop - (j + 'a'));
+            }
+
+        }
+
     }
 
     void setOwnHeuristic()              // метод для задания собственной эвристики
@@ -142,9 +148,19 @@ public:
                 }
             }
             if(!flag)
+            {
+                for(int j = 0; j < MATRIX_SIZE; j++)
+                    if(matrix[i][j].distance != 0)
+                    {
+                        flag = true;
+                        break;
+                    }
+            }
+            if(!flag) {
                 continue;
+            }
             float value = -1;
-            while(value <= 0)                   // задание эвристики
+            while(value < 0)                   // задание эвристики
             {
                 printf("enter heuristic for top (%c): ", 'a' + i);
                 std::cin >> value;
@@ -155,19 +171,17 @@ public:
         }
     }
 
-    void setClosed(std::vector<char>& open, std::vector<char>& closed) const        // процедура для добавления вершины
+    void setClosed(std::vector<char>& open, std::vector<char>& closed, char top) const        // процедура для добавления вершины
     {                                                                               // в обработанное множество
-        for(auto iter: open)
+        for(auto iter = open.begin(); iter != open.end();iter++)
         {
-            bool flag = false;
-            for(int i = 0; i < MATRIX_SIZE; i++)                // цикл для проверки существования необработанных ребер
-                flag |= matrix[iter - 'a'][i].visited;
-            if(flag)
+            if(*iter == top)
             {
-                printf("all tops from (%c) visited\nadd (%c) to closed\n", iter, iter);
-                puts("--------------------------");
-                closed.push_back(open.back());
-                open.pop_back();
+                printf("all tops from (%c) visited\nadd (%c) to closed\n", *iter, *iter);
+                puts("----------------------");
+                closed.push_back(*iter);
+                open.erase(iter);
+                break;
             }
         }
     }
@@ -176,8 +190,8 @@ public:
     {                                                           // текущей вершины
         for(int i = 0; i < MATRIX_SIZE; i++)
         {
-                matrix[next][i].prevTop = prev;
-                matrix[next][i].gX = startDistance;
+            matrix[next][i].prevTop = prev;
+            matrix[next][i].gX = startDistance;
         }
     }
 
@@ -199,18 +213,6 @@ public:
             result.push_back(*i);
     }
 
-
-
-    bool isInQueue(std::vector<Queue>& queue, Queue value) const        // метод для проверки наличия ребра
-    {                                                                   // в текущей очереди
-        for(auto i : queue)
-        {
-            if(i.next == value.next && i.gX == value.gX)
-                return true;
-        }
-        return false;
-    }
-
     bool isInMany(std::vector<char>& many, char symbol) const           // метод для проверки наличия вершины
     {                                                                   // в заданном множестве
         for(auto iter : many)
@@ -219,44 +221,49 @@ public:
         return false;
     }
 
+    void printQueue(std::vector<Queue>& queue) const
+    {
+        puts("----------------------");
+        printf("in queue:\n");
+        for(auto iter : queue)
+        {
+            printf("from (%c) to (%c) = %g\n",iter.prev, iter.next, iter.gX);
+        }
+        puts("----------------------");
+    }
+
     bool aStar(char startTop, char endTop)                              // метод реализующий алгоритм а*
     {
         result.clear();
-        int bufferTop = startTop - 'a';
-
+        if(startTop == endTop)
+        {
+            result.push_back(startTop);
+            return true;
+        }
         std::vector<Queue> queue;
-        std::vector<char> closed, open;
+        std::vector<char> closed_char, open;
+        unsigned int currentTop;
         open.push_back(startTop);
-        while(!open.empty())                                           // пока есть хотя бы одно необработанное ребро
+        for(int nextTop = 0; nextTop < MATRIX_SIZE; nextTop++)  //  добавляем в очередь элементы из стартовой вершины
+        {
+            currentTop = startTop - 'a';
+            if(matrix[currentTop][nextTop].distance != 0)
+            {
+                Queue buffer;
+                buffer.next = nextTop + 'a';
+                buffer.gX = matrix[currentTop][nextTop].distance + matrix[currentTop][nextTop].gX;
+                buffer.prev = startTop;
+                matrix[currentTop][nextTop].visited = true;
+                setG_X(nextTop, matrix[currentTop][nextTop].distance + matrix[currentTop][nextTop].gX , startTop);//куда, дистанция от старта, откуда
+                queue.push_back(buffer);
+            }
+        }
+
+        setClosed(open, closed_char,startTop);
+        while(!queue.empty())                                           // пока есть хотя бы одно необработанное ребро
         {                                                               // идет поиск пути
-            unsigned int currentTop;
-            if(open.back()== endTop) {
-                restoreWay(startTop, endTop);
-                return true;
-            }
-            for(auto iter : open)                                       // Цикл для добавления в очередь новых вариантов
-            {                                                           // пути. Если текущий путь отсутствует в очереди,
-                for(int nextTop = 0; nextTop < MATRIX_SIZE; nextTop++)  //  добавляем в очередь
-                {
-                    currentTop = iter - 'a';
-                    if(matrix[currentTop][nextTop].distance != 0)
-                    {
-                        Queue buffer;
-                        buffer.next = nextTop + 'a';
-                        buffer.gX = matrix[currentTop][nextTop].distance + matrix[currentTop][nextTop].gX;
-                        buffer.prev = iter;
-                        if(!isInQueue(queue, buffer) && !matrix[currentTop][nextTop].visited)
-                        {
-                            matrix[currentTop][nextTop].visited = true;
-                            setG_X(nextTop, matrix[currentTop][nextTop].distance + matrix[currentTop][nextTop].gX , iter);//куда, дистанция от старта, откуда
-                            queue.push_back(buffer);
-                        }
-                    }
-                }
-            }
-            setClosed(open, closed);                                // обновляем множества обработанных и необработанных вершин
-            if(queue.empty())
-                return false;
+            puts("new iteration");
+            printQueue(queue);
             Queue minValue = queue[0];
             auto iterPosition = queue.begin();
             for(auto iter = queue.begin(); iter != queue.end(); iter++)   // поиск минимального значения в очереди и
@@ -269,19 +276,44 @@ public:
                     iterPosition = iter;
                 }
             }
-            queue.erase(iterPosition);
-            if(isInMany(closed, minValue.next))                         // Если элемент ведет в обработанную вершину,
-                continue;                                                  // пропускаем его
-            if(!isInMany(open, minValue.next))
-            {
-                printf("add way from (%c) to (%c)\n", minValue.prev, minValue.next);
-                puts("--------------------------");
-                open.push_back(minValue.next);                             // Добавление элемента в необработанное множество
+            printf("min value in queue: from (%c) to (%c) cost g(x) = %g\nerased\n", minValue.prev, minValue.next, minValue.gX);
+            if(minValue.next == endTop) {                              // если найденное значение является конечной вершиной
+                setG_X(minValue.next - 'a', minValue.gX, minValue.prev);// восстанавливаем путь
+                restoreWay(startTop, endTop);
+                return true;
             }
-            else
+
+            queue.erase(iterPosition);
+            setClosed(open, closed_char, minValue.prev);
+            for(int i = 0; i < MATRIX_SIZE; i++)        // рассматриваем всех соседей данной вершины
             {
-                if(matrix[minValue.next - 'a'][0].gX > minValue.gX)
-                    setG_X(minValue.next, minValue.gX, minValue.prev);     // Обновляем путь, если он оказался меньше
+
+                if(matrix[minValue.next - 'a'][i].distance != 0)
+                {
+                    float tentativeGScore = minValue.gX + matrix[minValue.next - 'a'][i].distance;
+                    Queue buffer;
+                    buffer.next = 'a' + i;
+                    buffer.prev = minValue.next;
+                    buffer.gX = tentativeGScore;
+                    if(isInMany(closed_char, i + 'a'))                         // Если элемент ведет в обработанную вершину,
+                        continue;                                                        // пропускаем его
+                    if(!isInMany(open, i + 'a'))                               // Если элемент не в множестве
+                    {                                                                    // обрабатываемых вершин, то добавляем его в это множество
+                        setG_X(buffer.next - 'a', tentativeGScore, buffer.prev);
+                        open.push_back(buffer.next);
+                    }
+                    else
+                    {
+                        float matrixValue = matrix[i][0].gX;
+                        if(matrix[i][0].gX > tentativeGScore)
+                        {
+                            printf("update g(x) for top %c\nold = %g, new = %g\n", 'a' + i, matrix[i][0].gX, tentativeGScore);
+                            setG_X(i, tentativeGScore, minValue.next);     // Обновляем путь, если он оказался меньше
+                        }
+                    }
+                    printf("add way from (%c) to (%c) cost g(x) = %g\n", buffer.prev, buffer.next, buffer.gX);
+                    queue.push_back(buffer);
+                }
             }
         }
         return false;
@@ -311,22 +343,19 @@ int main() {
     }
     puts("search way with greedy: ");
     if(graph.greedyAlgorithm(startTop, endTop))
-    {
         graph.printResult();
-    }
     else
-        std::cout << "don't exist" << std::endl;
-
+       std::cout << "don't exist" << std::endl;
     puts("\n\n\n");
-
     graph.setNotVisited();
     //graph.setHeuristicStepik(endTop);
     graph.setOwnHeuristic();
-
-
     puts("search way with a*: ");
     if(graph.aStar(startTop, endTop))
+    {
+        printf("result: ");
         graph.printResult();
+    }
     else
         std::cout << "don't exist" << std::endl;
     return 0;
