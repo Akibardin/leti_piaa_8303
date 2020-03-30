@@ -268,8 +268,17 @@ public:
             auto iterPosition = queue.begin();
             for(auto iter = queue.begin(); iter != queue.end(); iter++)   // поиск минимального значения в очереди и
             {                                                             // последующее извлечение его
+                puts("calculation priority");
                 float fXMin = minValue.gX + matrix[minValue.prev - 'a'][minValue.next - 'a'].hX;
+                printf("f(x) of current min (%c)->(%c) = %g\n", minValue.prev, minValue.next, fXMin);
+                printf("current min f(%c) = g(%c) + h(%c)  =%g + %g = %g\n", minValue.next, minValue.next, minValue.next,
+                        minValue.gX, matrix[minValue.prev - 'a'][minValue.next - 'a'].hX, fXMin);
+                puts("----------------------");
                 float fXIter = (*iter).gX + matrix[(*iter).prev - 'a'][(*iter).next - 'a'].hX;
+                printf("f(x) of current element of queue (%c)->(%c) = %g\n", minValue.prev, minValue.next, fXMin);
+                printf("current element f(%c) = g(%c) + h(%c)  =%g + %g = %g\n", (*iter).next, (*iter).next,(*iter).next,
+                        (*iter).gX,  matrix[(*iter).prev - 'a'][(*iter).next - 'a'].hX, fXIter);
+                puts("----------------------");
                 if(fXMin > fXIter || (fXMin == fXIter && minValue.next < (*iter).next))
                 {
                     minValue = *iter;
@@ -278,6 +287,7 @@ public:
             }
             printf("min value in queue: from (%c) to (%c) cost g(x) = %g\nerased\n", minValue.prev, minValue.next, minValue.gX);
             if(minValue.next == endTop) {                              // если найденное значение является конечной вершиной
+                printf("set g(%c) = %g\n", minValue.next, minValue.gX);
                 setG_X(minValue.next - 'a', minValue.gX, minValue.prev);// восстанавливаем путь
                 restoreWay(startTop, endTop);
                 return true;
@@ -299,6 +309,7 @@ public:
                         continue;                                                        // пропускаем его
                     if(!isInMany(open, i + 'a'))                               // Если элемент не в множестве
                     {                                                                    // обрабатываемых вершин, то добавляем его в это множество
+                        printf("set g(%c) = %g\n", buffer.next, tentativeGScore);
                         setG_X(buffer.next - 'a', tentativeGScore, buffer.prev);
                         open.push_back(buffer.next);
                     }
