@@ -1,0 +1,15 @@
+12
+a
+e
+a b 5
+a c 4
+a d 2
+b c 1
+b g 5
+b f 3
+c g 4
+c f 1
+d c 2
+d f 1
+g e 5
+f e 8
