@@ -130,6 +130,14 @@ public:                                                // путь при обр
                 }
             } else {
                 closed.push_back(way.back());                       // -Если путь не найден, то помечаем вершину как
+                for(auto backNeighbor: backNeighborList)
+                {
+                    if(backNeighbor == way.back())
+                    {
+                        backNeighborList.pop_back();
+                        break;
+                    }
+                }
                                                                     // просмотренную и удаляем ее из пути
 #ifdef debug
                 std::cout << "no way from: " << way.back() << std::endl;
@@ -180,7 +188,12 @@ public:                                                // путь при обр
                     {
 
                         if(next_iter.first == *(way_iter + 1) && minFlow > next_iter.second.first - next_iter.second.second)
+                        {
                             minFlow = next_iter.second.first - next_iter.second.second;
+#ifdef debug
+                            std::cout << "bottle neck: " << minFlow << std::endl;
+#endif
+                        }
                     }
                 }
                 else
@@ -235,16 +248,25 @@ public:                                                // путь при обр
 
                     if(flag && backTop && graph[*way_iter].forwardEdge[*(way_iter + 1)].second == graph[*way_iter].forwardEdge[*(way_iter + 1)].first)
                     {
+#ifdef debug
+                        std::cout << "bottle neck " << *way_iter<< "->" << *(way_iter+1) << std::endl;
+#endif
                         minTop = *way_iter;
                         flag = false;
                     }
                 } else                                                              //-из обратного ребра вычитаем
                 {                                                                   //минимальный поток
                     graph[*(way_iter + 1)].forwardEdge[*way_iter].second -= minFlow;
-                    minTop = *way_iter;
-                    backTop = false;
+                    if(flag  && backTop /*&& graph[*(way_iter + 1)].forwardEdge[*way_iter].second*/)
+                    {
+                        minTop = *way_iter;
+                        backTop = false;
 #ifdef debug
-                    std::cout << "flow of " << *(way_iter+1)<< "->" << *way_iter << " = " << graph[*way_iter].forwardEdge[*(way_iter + 1)].second << std::endl;
+                        std::cout << "bottle neck " << *(way_iter+1)<< "->" << *(way_iter) << std::endl;
+#endif
+                    }
+#ifdef debug
+                    std::cout << "flow of " << *(way_iter+1)<< "->" << *way_iter << " = " << graph[*(way_iter + 1)].forwardEdge[*way_iter].second << std::endl;
 #endif
                 }
             }
