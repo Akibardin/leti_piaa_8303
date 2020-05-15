@@ -179,7 +179,7 @@ public:
 };
 
 int main() {
-    std::freopen("test", "r", stdin);
+    //std::freopen("test", "r", stdin);
     Trie trie;
     trie.init();
     std::string text, pattern;
